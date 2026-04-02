@@ -1,0 +1,5 @@
+# Nested projects are separate repositories.
+/*/
+
+# Local root overrides.
+.env
