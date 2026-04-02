@@ -1,5 +1,11 @@
 # Nested projects are separate repositories.
 /*/
+!/deploy/
+!/deploy/**
 
 # Local root overrides.
 .env
+
+# Host-local deployment inventory.
+/deploy/inventory/hosts/*.env
+/deploy/rendered/

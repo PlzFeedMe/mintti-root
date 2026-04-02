@@ -1,6 +1,8 @@
 # Mintti Compose Scaffold
 
-This workspace-level scaffold models one container per repo, excluding `mintti-design`.
+This file documents the current single-host compose scaffold for local development and early integration work.
+
+For the new multi-host server deployment model across `ilmo-1`, `aimo-1`, and `timo` customer VMs, use [DEPLOYMENT.md](DEPLOYMENT.md) and the role-based files under `deploy/`.
 
 The root repository expects the child repositories to live beside it as sibling directories.
 
@@ -36,6 +38,8 @@ The bootstrap script does the following:
 
 If the server cannot use `sudo` or is not Ubuntu/Debian, install GitHub CLI manually before running the script.
 
+For non-interactive deployment from `ilmo-1`, the deployment scaffold runs the bootstrap script with `GH_AUTH_MODE=fail`, which means `gh` must already be authenticated on the target host.
+
 ## Behavior
 
 - Placeholder repos build a tiny Alpine image and stay idle with the repo bind-mounted at `/workspace`.
@@ -68,3 +72,4 @@ docker compose down
 - Repo-local loader settings live in `mintti-COD-db/.env`, with defaults committed in `mintti-COD-db/.env.example`.
 - The frontend proxies API traffic to `http://mintti-background:8000`, which is currently just a reserved scaffold target until that repo gets an actual service implementation.
 - `mintti-design` remains a separate sibling repository but is not part of the compose stack.
+- The top-level `docker-compose.yaml` is still a single-host scaffold. It is not the deployment contract for the multi-host server layout.

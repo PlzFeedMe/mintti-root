@@ -5,6 +5,7 @@ set -euo pipefail
 ROOT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 GITHUB_OWNER=${GITHUB_OWNER:-PlzFeedMe}
 INSTALL_GH=${INSTALL_GH:-1}
+GH_AUTH_MODE=${GH_AUTH_MODE:-interactive}
 
 REPO_FOLDERS=(
   "mintti-background"
@@ -74,6 +75,10 @@ install_gh_cli() {
 ensure_gh_auth() {
   if gh auth status >/dev/null 2>&1; then
     return
+  fi
+
+  if [[ "$GH_AUTH_MODE" == "fail" ]]; then
+    fail "GitHub CLI is not authenticated. Run gh auth login on the host and rerun."
   fi
 
   log "GitHub CLI is not authenticated. Starting interactive login."

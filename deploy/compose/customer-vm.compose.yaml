@@ -1,0 +1,45 @@
+name: mintti-customer
+
+x-placeholder-service: &placeholder-service
+  restart: unless-stopped
+  init: true
+  tty: true
+  stdin_open: true
+  working_dir: /workspace
+  networks:
+    - mintti
+
+services:
+  mintti-project-db:
+    <<: *placeholder-service
+    build:
+      context: ./mintti-project-db
+    container_name: mintti-project-db
+    volumes:
+      - ./mintti-project-db:/workspace
+
+  mintti-frontend-backend:
+    build:
+      context: ./mintti-frontend-backend
+    container_name: mintti-frontend-backend
+    restart: unless-stopped
+    init: true
+    environment:
+      VITE_PROXY_TARGET: ${MINTTI_FRONTEND_PROXY_TARGET:?Set MINTTI_FRONTEND_PROXY_TARGET in the inventory or deploy.config.env}
+    command:
+      - npm
+      - run
+      - dev
+      - --
+      - --host
+      - 0.0.0.0
+      - --port
+      - "${MINTTI_FRONTEND_PORT:-3000}"
+    ports:
+      - ${MINTTI_FRONTEND_PORT:-3000}:3000
+    networks:
+      - mintti
+
+networks:
+  mintti:
+    driver: bridge

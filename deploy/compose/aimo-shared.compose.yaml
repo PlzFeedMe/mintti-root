@@ -1,0 +1,103 @@
+name: mintti-aimo
+
+x-placeholder-service: &placeholder-service
+  restart: unless-stopped
+  init: true
+  tty: true
+  stdin_open: true
+  working_dir: /workspace
+  networks:
+    - mintti
+
+services:
+  mintti-background:
+    <<: *placeholder-service
+    build:
+      context: ./mintti-background
+    container_name: mintti-background
+    ports:
+      - ${MINTTI_BACKGROUND_PORT:-8000}:8000
+    volumes:
+      - ./mintti-background:/workspace
+
+  mintti-cod-db:
+    <<: *placeholder-service
+    build:
+      context: ./mintti-COD-db
+    container_name: mintti-cod-db
+    depends_on:
+      mintti-cod-postgres:
+        condition: service_healthy
+    env_file:
+      - ./mintti-COD-db/.env
+    environment:
+      DB_HOST: mintti-cod-postgres
+      DB_PORT: 5432
+      COD_CIFS_PATH: ${MINTTI_COD_CIFS_CONTAINER_PATH:-/workspace/cod-cifs}
+      COD_METADATA_PATH: ${MINTTI_COD_METADATA_CONTAINER_PATH:-/workspace/cod-metadata}
+    volumes:
+      - ./mintti-COD-db:/workspace
+      - ${MINTTI_COD_CIFS_HOST_PATH}:${MINTTI_COD_CIFS_CONTAINER_PATH:-/workspace/cod-cifs}:ro
+      - ${MINTTI_COD_METADATA_HOST_PATH}:${MINTTI_COD_METADATA_CONTAINER_PATH:-/workspace/cod-metadata}:ro
+
+  mintti-cod-postgres:
+    image: postgres:13
+    container_name: mintti-cod-postgres
+    restart: unless-stopped
+    networks:
+      - mintti
+    environment:
+      POSTGRES_DB: ${MINTTI_COD_DB_NAME:-coddb}
+      POSTGRES_USER: ${MINTTI_COD_DB_USER:-coddbuser}
+      POSTGRES_PASSWORD: ${MINTTI_COD_DB_PASSWORD:-coddbpassword}
+    ports:
+      - ${MINTTI_COD_DB_PORT:-5432}:5432
+    volumes:
+      - mintti-cod-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  mintti-peaks:
+    <<: *placeholder-service
+    build:
+      context: ./mintti-peaks
+    container_name: mintti-peaks
+    volumes:
+      - ./mintti-peaks:/workspace
+
+  mintti-report-builder:
+    <<: *placeholder-service
+    build:
+      context: ./mintti-report-builder
+    container_name: mintti-report-builder
+    volumes:
+      - ./mintti-report-builder:/workspace
+
+  mintti-rietveld:
+    <<: *placeholder-service
+    build:
+      context: ./mintti-rietveld
+    container_name: mintti-rietveld
+    volumes:
+      - ./mintti-rietveld:/workspace
+
+  mintti-search-match:
+    <<: *placeholder-service
+    build:
+      context: ./mintti-search-match
+    container_name: mintti-search-match
+    volumes:
+      - ./mintti-search-match:/workspace
+
+networks:
+  mintti:
+    driver: bridge
+
+volumes:
+  mintti-cod-postgres-data:
